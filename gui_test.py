@@ -132,14 +132,27 @@ class Window(Frame):
             if len(self.circles):
                 self.canv.delete(self.circles[-1], self.circles[-1] - 1)
                 self.circles.pop()
+            if len(self.circles)==0:
+                self.help_def['text'] = "Нажмите ЛКМ, чтобы указать центр окружности"
         if self.mode == "line":
             if len(self.lines):
                 self.canv.delete(self.lines[-1], self.lines[-1] - 1, self.lines[-1] - 2)
                 self.lines.pop()
+            if len(self.lines)==0:
+                self.help_def['text'] = "Нажмите ЛКМ, чтобы начать рисовать линию"
+
+    def delete_all(self):
+        self.canv.delete("all")
+        self.lines = []
+        self.circles = []
+        self.dots = []
+        if self.mode == "line":
+            self.help_def['text'] = "Нажмите ЛКМ, чтобы начать рисовать линию"
 
     def line(self, event):
         self.click_count += 1
         if self.click_count % 2 == 1:
+            self.help_def['text'] = "Нажмите ЛКМ, чтобы закончить линию."
             print("1 dot:", event.x, event.y)
             self.first_dot['x'] = event.x
             self.first_dot['y'] = event.y
@@ -150,6 +163,8 @@ class Window(Frame):
                                   fill=self.color, outline=self.color)
         else:
             print("2 dot:", event.x, event.y)
+            self.help_def['text'] = "Нажмите ЛКМ, чтобы начать рисовать линию. Нажмите ПКМ, " \
+                                    "чтобы удалить предыдущую линию."
             self.second_dot['x'] = event.x
             self.second_dot['y'] = event.y
             self.click_count = 0
@@ -166,6 +181,7 @@ class Window(Frame):
 
         self.click_count += 1
         if self.click_count % 2 == 1:
+            self.help_def['text'] = "Нажмите ЛКМ, чтобы задать радиус окружности."
             print("1 dot:", event.x, event.y)
             self.first_dot['x'] = event.x
             self.first_dot['y'] = event.y
@@ -175,6 +191,8 @@ class Window(Frame):
                                   event.y + self.dot_size,
                                   fill=self.color, outline=self.color)
         else:
+            self.help_def['text'] = "Нажмите ЛКМ, чтобы указать центр окружности. Нажмите ПКМ, " \
+                                    "чтобы удалить предыдущую окружность."
             print("2 dot:", event.x, event.y)
             self.second_dot['x'] = event.x
             self.second_dot['y'] = event.y
@@ -194,16 +212,28 @@ class Window(Frame):
 
     def set_dot_mode(self):
         self.mode = "dot"
+        self.help_def['text'] = "Нажмите ЛКМ, чтобы поставить точку. Нажмите ПКМ, чтобы удалить точку"
         self.canv.bind("<Button-1>", self.dot)
         self.canv.bind("<Button-2>", self.delete)
 
     def set_circle_mode(self):
         self.mode = "circle"
+        if self.circles:
+            self.help_def['text'] = "Нажмите ЛКМ, чтобы указать центр окружности. Нажмите ПКМ, " \
+                                    "чтобы удалить предыдущую окружность."
+        else:
+            self.help_def['text'] = "Нажмите ЛКМ, чтобы указать центр окружности"
+
         self.canv.bind("<Button-1>", self.circle)
         self.canv.bind("<Button-2>", self.delete)
 
     def set_line_mode(self):
         self.mode = "line"
+        if self.lines:
+            self.help_def['text'] = "Нажмите ЛКМ, чтобы начать рисовать линию. Нажмите ПКМ, " \
+                                    "чтобы удалить предыдущую линию."
+        else:
+            self.help_def['text'] = "Нажмите ЛКМ, чтобы начать рисовать линию"
         self.canv.bind("<Button-1>", self.line)
         self.canv.bind("<Button-2>", self.delete)
 
@@ -219,17 +249,25 @@ class Window(Frame):
 
         self.canv = Canvas(self, bg="white")  # Создаем поле для рисования, устанавливаем белый фон
         self.canv.grid(row=2, column=0, columnspan=7,
-                       padx=5, pady=5, sticky=E+W+S+N)
+                       padx=5, pady=1, sticky=E+W+S+N)
+        self.help = Label(self, text="Подсказка:",height=1)
+        self.help.grid(row=3, column=0, sticky=S+W)
+
+        self.help_def = Label(self, text="", height=1)
+        self.help_def.grid(row=3, column=1, columnspan=6, sticky=S+W)
 
         if self.mode == "dot":
+            self.help_def['text'] = "Нажмите ЛКМ, чтобы поставить точку. Нажмите ПКМ, чтобы удалить точку"
             self.canv.bind("<Button-1>", self.dot)
             self.canv.bind("<Button-2>", self.delete)
 
         if self.mode == "line":
+            self.help_def['text'] = "Нажмите ЛКМ, чтобы начать рисовать линию"
             self.canv.bind("<Button-1>", self.line)
             self.canv.bind("<Button-2>", self.delete)
 
         if self.mode == "circle":
+            self.help_def['text'] = "Нажмите ЛКМ, чтобы указать центр окружности"
             self.canv.bind("<Button-1>", self.circle)
             self.canv.bind("<Button-2>", self.delete)
 
@@ -278,11 +316,10 @@ class Window(Frame):
         pick_btn.bind("<Enter>", lambda event: self.show_tip(event, string="Выбор"))
         pick_btn.bind("<Leave>", lambda event: self.show_tip(event, string=""))
 
-
         self.del_im = PhotoImage(file="resources/refresh.png")
         del_btn = Button(self, compound=CENTER, width=31, height=31, border=0, )
         self.del_im = self.del_im.subsample(2, 2)
-        del_btn["command"] = lambda: self.canv.delete("all")
+        del_btn["command"] = self.delete_all
         del_btn["image"] = self.del_im
         del_btn.grid(row=0, column=6, padx=10, rowspan=2,sticky=E)
         del_btn.bind("<Enter>", lambda event: self.show_tip(event, string="Удалить всё"))
@@ -351,7 +388,7 @@ class Window(Frame):
 if __name__ == "__main__":
     root = Tk()
     root.title("test")
-    root.geometry("800x600+200+100")
-    root.resizable(FALSE, FALSE)
+    root.geometry("900x600+200+100")
+    # root.resizable(FALSE, FALSE)
     app = Window(root)
     root.mainloop()
